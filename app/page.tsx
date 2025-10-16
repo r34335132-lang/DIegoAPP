@@ -49,9 +49,9 @@ export default async function HomePage() {
             <Card className="border-2 hover:border-primary transition-colors">
               <CardHeader>
                 <Users className="h-10 w-10 text-primary mb-2" />
-                <CardTitle>Gestión de Alumnos</CardTitle>
+                <CardTitle>Promover tu bienestar fisico</CardTitle>
                 <CardDescription>
-                  Administra perfiles completos con datos médicos y seguimiento personalizado
+                  mediante un entrenamiento, funcional, accesible y profecional y con un trato meramente humano es mi objetivo
                 </CardDescription>
               </CardHeader>
             </Card>
