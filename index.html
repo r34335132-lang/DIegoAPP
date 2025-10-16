@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Entrenador Personal</title>
+    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importamos el cliente de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Lucide Icons para una iconografía limpia -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <style>
+        /* Estilos adicionales para mejorar la UX */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .view { display: none; }
+        .active-view { display: block; }
+        .chat-bubble-sent {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: white;
+        }
+        .chat-bubble-received {
+            background-color: #e5e7eb; /* bg-gray-200 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app-container" class="max-w-4xl mx-auto md:p-4">
+
+        <!-- VISTA DE LOGIN -->
+        <div id="login-view" class="view active-view min-h-screen flex items-center justify-center bg-gray-900 text-white">
+            <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-white">Iniciar Sesión</h2>
+                    <p class="mt-2 text-gray-400">Accede a tu panel de control.</p>
+                </div>
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="email" class="text-sm font-bold text-gray-400 tracking-widest">EMAIL</label>
+                        <input id="email" name="email" type="email" autocomplete="email" required class="w-full p-3 mt-2 text-gray-900 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="tu@email.com">
+                    </div>
+                    <div>
+                        <label for="password" class="text-sm font-bold text-gray-400 tracking-widest">CONTRASEÑA</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required class="w-full p-3 mt-2 text-gray-900 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********">
+                    </div>
+                    <button type="submit" class="w-full p-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                        Entrar
+                    </button>
+                    <div id="login-error" class="text-red-400 text-sm text-center mt-2"></div>
+                </form>
+                 <p class="text-center text-gray-400 text-sm">
+                    ¿No tienes cuenta? <button id="show-register-btn" class="font-semibold text-blue-400 hover:text-blue-300">Regístrate</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- VISTA DE REGISTRO -->
+        <div id="register-view" class="view min-h-screen flex items-center justify-center bg-gray-900 text-white">
+            <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-white">Crear Cuenta</h2>
+                    <p class="mt-2 text-gray-400">Regístrate para empezar.</p>
+                </div>
+                <form id="register-form" class="space-y-6">
+                    <div>
+                        <label for="register-fullname" class="text-sm font-bold text-gray-400 tracking-widest">NOMBRE COMPLETO</label>
+                        <input id="register-fullname" name="fullName" type="text" required class="w-full p-3 mt-2 text-gray-900 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Juan Pérez">
+                    </div>
+                    <div>
+                        <label for="register-email" class="text-sm font-bold text-gray-400 tracking-widest">EMAIL</label>
+                        <input id="register-email" name="email" type="email" autocomplete="email" required class="w-full p-3 mt-2 text-gray-900 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="tu@email.com">
+                    </div>
+                    <div>
+                        <label for="register-password" class="text-sm font-bold text-gray-400 tracking-widest">CONTRASEÑA</label>
+                        <input id="register-password" name="password" type="password" required class="w-full p-3 mt-2 text-gray-900 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <button type="submit" class="w-full p-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                        Registrarse
+                    </button>
+                    <div id="register-error" class="text-red-400 text-sm text-center mt-2"></div>
+                </form>
+                <p class="text-center text-gray-400 text-sm">
+                    ¿Ya tienes una cuenta? <button id="show-login-btn" class="font-semibold text-blue-400 hover:text-blue-300">Inicia Sesión</button>
+                </p>
+            </div>
+        </div>
+
+
+        <!-- VISTA DEL ENTRENADOR -->
+        <div id="trainer-view" class="view bg-white md:rounded-lg shadow-lg min-h-screen">
+             <header class="bg-gray-800 text-white p-4 flex justify-between items-center md:rounded-t-lg">
+                <h1 class="text-xl font-bold">Dashboard del Entrenador</h1>
+                <button id="trainer-logout" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">Salir</button>
+            </header>
+            <main class="md:flex md:h-[calc(100vh-68px)]">
+                <!-- Columna de Alumnos -->
+                <aside class="w-full md:w-1/3 border-r border-gray-200 p-4 bg-gray-50">
+                    <h2 class="text-lg font-semibold mb-4">Mis Alumnos</h2>
+                    <div id="trainer-student-list" class="space-y-2">
+                        <!-- La lista de alumnos se cargará aquí -->
+                        <p class="text-gray-500">Cargando alumnos...</p>
+                    </div>
+                </aside>
+                <!-- Columna de Detalles del Alumno -->
+                <section id="trainer-student-details" class="w-full md:w-2/3 p-4 overflow-y-auto">
+                     <div class="text-center text-gray-500 h-full flex items-center justify-center">
+                        <p>Selecciona un alumno para ver sus detalles, actividad y chatear.</p>
+                    </div>
+                    <!-- Los detalles del alumno seleccionado se mostrarán aquí -->
+                </section>
+            </main>
+        </div>
+
+        <!-- VISTA DEL ALUMNO -->
+        <div id="student-view" class="view bg-white md:rounded-lg shadow-lg min-h-screen">
+            <header class="bg-gray-800 text-white p-4 flex justify-between items-center md:rounded-t-lg">
+                <h1 class="text-xl font-bold">Panel del Alumno</h1>
+                <button id="student-logout" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">Salir</button>
+            </header>
+            <main class="p-6">
+                <div id="student-welcome" class="mb-6"></div>
+                <h2 class="text-2xl font-bold mb-4">Tu rutina de hoy</h2>
+                <div id="student-routine-list" class="space-y-4">
+                    <!-- La rutina del alumno se cargará aquí -->
+                    <p class="text-gray-500">Cargando rutina...</p>
+                </div>
+                <!-- Chat con el entrenador -->
+                 <div id="student-chat-container" class="mt-8">
+                     <!-- El chat se renderizará aquí -->
+                 </div>
+            </main>
+        </div>
+        
+        <!-- MODAL DE ENTRENAMIENTO PARA EL ALUMNO -->
+        <div id="workout-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+             <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 text-center relative">
+                 <button id="close-workout-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">&times;</button>
+                 <h2 id="workout-exercise-name" class="text-3xl font-bold">Nombre del Ejercicio</h2>
+                 <p id="workout-exercise-details" class="text-gray-600"></p>
+                 
+                 <!-- Reproductor de video -->
+                 <div class="bg-gray-200 rounded-lg overflow-hidden">
+                     <video id="workout-video" controls class="w-full h-auto">
+                        <!-- El source del video se agregará dinámicamente -->
+                     </video>
+                 </div>
+
+                 <!-- Cronómetro -->
+                 <div class="bg-gray-900 text-white rounded-lg p-6 my-4">
+                     <p class="text-xl font-semibold tracking-wider">TIEMPO DE ENTRENO</p>
+                     <div id="stopwatch" class="text-6xl font-mono font-bold">00:00:00</div>
+                 </div>
+
+                 <!-- Controles -->
+                 <div class="flex justify-center space-x-4">
+                     <button id="start-stop-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition w-32">Iniciar</button>
+                     <button id="pause-resume-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition w-32" disabled>Pausar</button>
+                     <button id="finish-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition w-32" disabled>Finalizar</button>
+                 </div>
+             </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // #############################################################################
+        // ############# CONFIGURACIÓN INICIAL Y CLIENTE SUPABASE ########################
+        // #############################################################################
+        
+        // IMPORTANTE: Reemplaza estos valores con los de tu proyecto de Supabase.
+        // Ve a Project Settings > API en tu dashboard de Supabase.
+        const SUPABASE_URL = 'https://txnfxcmxhtpnrmxbyjki.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bmZ4Y214aHRwbnJteGJ5amtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MDY5NzEsImV4cCI6MjA3NTQ4Mjk3MX0.W_6IuzT5v11S_16Z4B8Vvi7BILY3cpo9MyWtyL2Twn8';
+
+        if (SUPABASE_URL.includes('TU_PROYECTO') || SUPABASE_ANON_KEY.includes('TU_SUPABASE')) {
+            alert('¡CONFIGURACIÓN NECESARIA! Por favor, abre el archivo index.html y reemplaza las variables SUPABASE_URL y SUPABASE_ANON_KEY con las de tu proyecto de Supabase.');
+        }
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // #############################################################################
+        // ####################### ESTADO GLOBAL DE LA APLICACIÓN ######################
+        // #############################################################################
+
+        let currentUser = null;
+        let realtimeChannel = null;
+
+        // Estado para el cronómetro del alumno
+        let stopwatchState = {
+            timer: null,
+            startTime: 0,
+            elapsedTime: 0,
+            pausedTime: 0,
+            isPaused: false,
+            isRunning: false,
+            currentActivity: '', // 'entrenando' o 'pausa'
+            currentRoutineId: null,
+        };
+
+        // #############################################################################
+        // ########################## LÓGICA DE NAVEGACIÓN #############################
+        // #############################################################################
+
+        const views = document.querySelectorAll('.view');
+        function showView(viewId) {
+            views.forEach(view => {
+                view.classList.remove('active-view');
+            });
+            document.getElementById(viewId).classList.add('active-view');
+        }
+
+        document.getElementById('show-register-btn').addEventListener('click', () => showView('register-view'));
+        document.getElementById('show-login-btn').addEventListener('click', () => showView('login-view'));
+
+        // #############################################################################
+        // ####################### LÓGICA DE AUTENTICACIÓN #############################
+        // #############################################################################
+
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const registerForm = document.getElementById('register-form');
+        const registerError = document.getElementById('register-error');
+
+        // --- MANEJO DE LOGIN ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            loginError.textContent = '';
+            
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                loginError.textContent = "Email o contraseña incorrectos.";
+            }
+            // onAuthStateChange se encargará del resto si el login es exitoso
+        });
+        
+        // --- MANEJO DE REGISTRO ---
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = e.target.fullName.value;
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            registerError.textContent = '';
+
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        role: 'alumno' // Por defecto, los nuevos registros son alumnos
+                    }
+                }
+            });
+
+            if (error) {
+                registerError.textContent = error.message;
+            } else {
+                // Si el registro es exitoso, onAuthStateChange se activará y
+                // la función checkUserProfile creará el perfil en la base de datos.
+                alert('¡Registro exitoso! Ahora serás dirigido a tu panel.');
+            }
+        });
+
+
+        // Al cargar la app, revisa si hay una sesión activa
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                await checkUserProfile(session.user);
+            } else {
+                currentUser = null;
+                showView('login-view');
+            }
+        });
+        
+        async function checkUserProfile(user) {
+             const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (error && error.code === 'PGRST116') { // Si no existe el perfil
+                // Lo creamos. Esto sucede la primera vez que un usuario se loguea.
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({ 
+                        id: user.id, 
+                        role: user.user_metadata.role || 'alumno', 
+                        full_name: user.user_metadata.full_name || user.email.split('@')[0] 
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error("Error creating profile:", insertError);
+                    return;
+                }
+                currentUser = newProfile;
+            } else if(error) {
+                 console.error("Error fetching profile:", error);
+                 return;
+            } else {
+                currentUser = profile;
+            }
+            
+            // Dirigir al usuario a su vista correspondiente
+            if (currentUser.role === 'entrenador') {
+                showView('trainer-view');
+                initTrainerView();
+            } else {
+                showView('student-view');
+                initStudentView();
+            }
+        }
+        
+        async function logout() {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+                realtimeChannel = null;
+            }
+            await supabase.auth.signOut();
+            showView('login-view');
+        }
+
+        document.getElementById('trainer-logout').addEventListener('click', logout);
+        document.getElementById('student-logout').addEventListener('click', logout);
+
+
+        // #############################################################################
+        // ########################### VISTA DEL ENTRENADOR ############################
+        // #############################################################################
+
+        const studentListContainer = document.getElementById('trainer-student-list');
+        const studentDetailsContainer = document.getElementById('trainer-student-details');
+        let selectedStudentId = null;
+
+        async function initTrainerView() {
+            const { data: students, error } = await supabase
+                .from('entrenador_alumnos')
+                .select('alumno_id, profiles (id, full_name)')
+                .eq('entrenador_id', currentUser.id);
+
+            if (error) {
+                console.error("Error fetching students: ", error);
+                studentListContainer.innerHTML = '<p class="text-red-500">Error al cargar alumnos.</p>';
+                return;
+            }
+            
+            if (students.length === 0) {
+                studentListContainer.innerHTML = '<p class="text-gray-500">Aún no tienes alumnos asignados.</p>';
+                return;
+            }
+
+            studentListContainer.innerHTML = students.map(s => `
+                <div class="p-3 bg-white border rounded-lg cursor-pointer hover:bg-blue-100 transition" data-student-id="${s.profiles.id}">
+                    <p class="font-semibold">${s.profiles.full_name}</p>
+                </div>
+            `).join('');
+
+            studentListContainer.querySelectorAll('[data-student-id]').forEach(el => {
+                el.addEventListener('click', () => {
+                    studentListContainer.querySelectorAll('.bg-blue-200').forEach(active => active.classList.remove('bg-blue-200'));
+                    el.classList.add('bg-blue-200');
+                    selectedStudentId = el.dataset.studentId;
+                    renderStudentDetails(selectedStudentId);
+                });
+            });
+        }
+        
+        async function renderStudentDetails(studentId) {
+             const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', studentId)
+                .single();
+
+            if (error) { console.error(error); return; }
+
+            studentDetailsContainer.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4">${profile.full_name}</h3>
+                
+                <!-- Actividad en Tiempo Real -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-lg mb-2">Actividad Reciente</h4>
+                    <div id="activity-log" class="h-48 overflow-y-auto bg-gray-100 p-3 rounded-lg border">Cargando actividad...</div>
+                </div>
+
+                <!-- Chat -->
+                <div id="trainer-chat-container">
+                     ${renderChatInterface(currentUser.id, studentId)}
+                </div>
+            `;
+            
+            fetchAndRenderActivityLog(studentId);
+            initChat(currentUser.id, studentId);
+
+            // Suscribirse a canales de Realtime
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
+            realtimeChannel = supabase.channel(`trainer-dashboard-${studentId}`);
+            realtimeChannel
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'logs_actividad', filter: `alumno_id=eq.${studentId}` }, payload => {
+                    addActivityLogEntry(payload.new);
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensajes_chat', filter: `emisor_id=eq.${studentId}` }, payload => {
+                    addChatMessage(payload.new, 'received');
+                })
+                .subscribe();
+        }
+
+        async function fetchAndRenderActivityLog(studentId) {
+            const activityLogDiv = document.getElementById('activity-log');
+            const { data, error } = await supabase
+                .from('logs_actividad')
+                .select('*')
+                .eq('alumno_id', studentId)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                activityLogDiv.innerHTML = '<p class="text-red-500">Error al cargar actividad.</p>';
+                return;
+            }
+            
+            if (data.length === 0) {
+                 activityLogDiv.innerHTML = '<p class="text-gray-500">No hay actividad registrada.</p>';
+                 return;
+            }
+            
+            activityLogDiv.innerHTML = '';
+            data.forEach(addActivityLogEntry);
+        }
+
+        function addActivityLogEntry(log) {
+            const activityLogDiv = document.getElementById('activity-log');
+            const entry = document.createElement('div');
+            entry.className = 'p-2 border-b text-sm';
+            
+            const activityText = {
+                'ver_video': 'Viendo video',
+                'entrenando': 'Entrenando',
+                'pausa': 'En pausa'
+            }[log.tipo_actividad] || log.tipo_actividad;
+
+            const time = new Date(log.created_at).toLocaleTimeString();
+            entry.innerHTML = `<strong>${time}:</strong> ${activityText} por <strong>${log.duracion_segundos}s</strong>.`;
+            activityLogDiv.prepend(entry);
+        }
+
+        // #############################################################################
+        // ############################ VISTA DEL ALUMNO ###############################
+        // #############################################################################
+        const studentWelcome = document.getElementById('student-welcome');
+        const studentRoutineContainer = document.getElementById('student-routine-list');
+
+        async function initStudentView() {
+            studentWelcome.innerHTML = `<h2 class="text-3xl font-bold">¡Hola, ${currentUser.full_name}!</h2>`;
+            
+            const today = new Date().getDay(); // Domingo = 0, Lunes = 1, ...
+            const dayOfWeek = today === 0 ? 7 : today;
+
+            const { data: routine, error } = await supabase
+                .from('rutinas_asignadas')
+                .select('*, ejercicios (*)')
+                .eq('alumno_id', currentUser.id)
+                .eq('dia_semana', dayOfWeek);
+            
+            if (error) {
+                console.error("Error fetching routine:", error);
+                studentRoutineContainer.innerHTML = '<p class="text-red-500">Error al cargar tu rutina.</p>';
+                return;
+            }
+
+            if (routine.length === 0) {
+                studentRoutineContainer.innerHTML = '<p class="text-gray-500">No tienes ejercicios asignados para hoy. ¡Día de descanso!</p>';
+            } else {
+                 studentRoutineContainer.innerHTML = routine.map(r => `
+                    <div class="bg-gray-50 border p-4 rounded-lg flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-lg">${r.ejercicios.nombre}</h3>
+                            <p class="text-gray-600">${r.series} series x ${r.repeticiones} reps, ${r.descanso_segundos}s descanso</p>
+                        </div>
+                        <button class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition start-workout-btn" data-routine='${JSON.stringify(r)}'>
+                            Empezar
+                        </button>
+                    </div>
+                 `).join('');
+                 
+                 document.querySelectorAll('.start-workout-btn').forEach(btn => {
+                     btn.addEventListener('click', () => {
+                         const routineData = JSON.parse(btn.dataset.routine);
+                         openWorkoutModal(routineData);
+                     });
+                 });
+            }
+            
+            // Iniciar chat con el entrenador
+            const { data: trainerRel, error: trainerError } = await supabase
+                .from('entrenador_alumnos')
+                .select('entrenador_id')
+                .eq('alumno_id', currentUser.id)
+                .single();
+            
+            if(trainerRel) {
+                const studentChatContainer = document.getElementById('student-chat-container');
+                studentChatContainer.innerHTML = renderChatInterface(currentUser.id, trainerRel.entrenador_id, "Entrenador");
+                initChat(currentUser.id, trainerRel.entrenador_id);
+
+                // Suscripción a mensajes del entrenador
+                if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+                realtimeChannel = supabase.channel(`student-chat-${currentUser.id}`);
+                realtimeChannel
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensajes_chat', filter: `emisor_id=eq.${trainerRel.entrenador_id}` }, payload => {
+                        addChatMessage(payload.new, 'received');
+                    })
+                    .subscribe();
+            }
+        }
+
+        // #############################################################################
+        // ########################### MODAL DE ENTRENAMIENTO ##########################
+        // #############################################################################
+        const modal = document.getElementById('workout-modal');
+        const closeBtn = document.getElementById('close-workout-modal');
+        const startStopBtn = document.getElementById('start-stop-btn');
+        const pauseResumeBtn = document.getElementById('pause-resume-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const stopwatchDisplay = document.getElementById('stopwatch');
+        const videoPlayer = document.getElementById('workout-video');
+
+        function openWorkoutModal(routineData) {
+            document.getElementById('workout-exercise-name').textContent = routineData.ejercicios.nombre;
+            document.getElementById('workout-exercise-details').textContent = `${routineData.series}x${routineData.repeticiones}, ${routineData.descanso_segundos}s descanso`;
+            stopwatchState.currentRoutineId = routineData.id;
+            
+            // Cargar video desde Supabase Storage
+            if (routineData.ejercicios.video_url) {
+                const { data } = supabase.storage.from('videos_ejercicios').getPublicUrl(routineData.ejercicios.video_url);
+                videoPlayer.src = data.publicUrl;
+                // Loguear el tiempo viendo el video
+                let videoWatchTime = 0;
+                let videoTimer = null;
+                videoPlayer.onplay = () => {
+                    videoTimer = setInterval(() => videoWatchTime++, 1000);
+                };
+                videoPlayer.onpause = videoPlayer.onended = () => {
+                    clearInterval(videoTimer);
+                    if (videoWatchTime > 0) {
+                        logActivity('ver_video', videoWatchTime);
+                        videoWatchTime = 0;
+                    }
+                };
+            } else {
+                videoPlayer.src = ""; // o un video de placeholder
+            }
+
+            resetStopwatch();
+            modal.classList.remove('hidden');
+        }
+
+        closeBtn.addEventListener('click', () => {
+            if(stopwatchState.isRunning) {
+                if(confirm('¿Seguro que quieres salir? El progreso del entrenamiento se perderá.')) {
+                     stopStopwatch();
+                     modal.classList.add('hidden');
+                }
+            } else {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Lógica del cronómetro
+        startStopBtn.addEventListener('click', () => {
+            if (!stopwatchState.isRunning) {
+                startStopwatch();
+            }
+        });
+
+        pauseResumeBtn.addEventListener('click', () => {
+            if (stopwatchState.isRunning) {
+                togglePauseResume();
+            }
+        });
+        
+        finishBtn.addEventListener('click', () => {
+            if(stopwatchState.isRunning) {
+                stopStopwatch();
+            }
+        });
+
+        function startStopwatch() {
+            stopwatchState.isRunning = true;
+            stopwatchState.isPaused = false;
+            stopwatchState.startTime = Date.now() - stopwatchState.elapsedTime;
+            stopwatchState.timer = setInterval(updateStopwatch, 100);
+            stopwatchState.currentActivity = 'entrenando';
+            startStopBtn.textContent = 'Activo';
+            startStopBtn.disabled = true;
+            pauseResumeBtn.disabled = false;
+            finishBtn.disabled = false;
+        }
+
+        function stopStopwatch() {
+            logCurrentActivity();
+            clearInterval(stopwatchState.timer);
+            resetStopwatch();
+            modal.classList.add('hidden');
+        }
+        
+        function togglePauseResume() {
+            stopwatchState.isPaused = !stopwatchState.isPaused;
+            if (stopwatchState.isPaused) {
+                logCurrentActivity();
+                stopwatchState.pausedTime = Date.now();
+                clearInterval(stopwatchState.timer);
+                pauseResumeBtn.textContent = 'Reanudar';
+                stopwatchState.currentActivity = 'pausa';
+            } else {
+                logCurrentActivity(); // Loguea el tiempo en pausa
+                stopwatchState.startTime += Date.now() - stopwatchState.pausedTime;
+                stopwatchState.timer = setInterval(updateStopwatch, 100);
+                pauseResumeBtn.textContent = 'Pausar';
+                stopwatchState.currentActivity = 'entrenando';
+            }
+        }
+
+        function updateStopwatch() {
+            const currentTime = Date.now();
+            stopwatchState.elapsedTime = currentTime - stopwatchState.startTime;
+            
+            let totalSeconds = Math.floor(stopwatchState.elapsedTime / 1000);
+            let hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            totalSeconds %= 3600;
+            let minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            let seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            
+            stopwatchDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        function resetStopwatch() {
+            clearInterval(stopwatchState.timer);
+            stopwatchState = { ...stopwatchState, timer: null, startTime: 0, elapsedTime: 0, pausedTime: 0, isPaused: false, isRunning: false, currentActivity: '' };
+            stopwatchDisplay.textContent = '00:00:00';
+            startStopBtn.textContent = 'Iniciar';
+            pauseResumeBtn.textContent = 'Pausar';
+            startStopBtn.disabled = false;
+            pauseResumeBtn.disabled = true;
+            finishBtn.disabled = true;
+        }
+        
+        // Función para registrar la actividad en la base de datos
+        async function logActivity(type, duration) {
+            const { error } = await supabase.from('logs_actividad').insert({
+                alumno_id: currentUser.id,
+                rutina_id: stopwatchState.currentRoutineId,
+                tipo_actividad: type,
+                duracion_segundos: duration,
+            });
+            if (error) console.error('Error logging activity:', error);
+        }
+
+        let lastLogTime = 0;
+        function logCurrentActivity() {
+             const now = Date.now();
+             const duration = Math.round((now - (stopwatchState.isPaused ? stopwatchState.pausedTime : lastLogTime)) / 1000);
+             if (duration > 0 && stopwatchState.currentActivity) {
+                 logActivity(stopwatchState.currentActivity, duration);
+             }
+             lastLogTime = now;
+        }
+
+
+        // #############################################################################
+        // ############################# LÓGICA DEL CHAT ###############################
+        // #############################################################################
+        
+        function renderChatInterface(myId, otherUserId, otherUserName = 'Alumno') {
+            return `
+                <div class="mt-6">
+                    <h4 class="font-semibold text-lg mb-2">Chat con ${otherUserName}</h4>
+                    <div id="chat-messages" class="h-64 overflow-y-auto bg-gray-100 p-3 rounded-lg border flex flex-col space-y-2">
+                        <!-- Mensajes aquí -->
+                    </div>
+                    <form id="chat-form" class="mt-2 flex space-x-2">
+                        <input id="chat-input" type="text" placeholder="Escribe un mensaje..." class="flex-grow border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="bg-blue-500 text-white font-bold px-4 py-2 rounded-lg hover:bg-blue-600 transition">Enviar</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function initChat(myId, otherUserId) {
+            const chatForm = document.getElementById('chat-form');
+            if (!chatForm) return;
+
+            // Cargar mensajes existentes
+            const { data, error } = await supabase
+                .from('mensajes_chat')
+                .select('*')
+                .or(`(emisor_id.eq.${myId},receptor_id.eq.${otherUserId}),(emisor_id.eq.${otherUserId},receptor_id.eq.${myId})`)
+                .order('created_at');
+
+            if (error) { console.error('Error fetching chat:', error); return; }
+            data.forEach(msg => addChatMessage(msg, msg.emisor_id === myId ? 'sent' : 'received'));
+            
+            // Enviar mensaje
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const input = document.getElementById('chat-input');
+                const messageText = input.value.trim();
+                if (!messageText) return;
+
+                const message = {
+                    emisor_id: myId,
+                    receptor_id: otherUserId,
+                    mensaje: messageText,
+                };
+                
+                const { data: newMsg, error } = await supabase
+                    .from('mensajes_chat')
+                    .insert(message)
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('Error sending message:', error);
+                } else {
+                    addChatMessage(newMsg, 'sent');
+                    input.value = '';
+                }
+            });
+        }
+        
+        function addChatMessage(message, type) {
+            const messagesContainer = document.getElementById('chat-messages');
+            if(!messagesContainer) return;
+
+            const bubble = document.createElement('div');
+            bubble.textContent = message.mensaje;
+            bubble.className = `p-2 rounded-lg max-w-xs ${type === 'sent' ? 'chat-bubble-sent self-end' : 'chat-bubble-received self-start'}`;
+            messagesContainer.appendChild(bubble);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+    </script>
+</body>
+</html>
+
