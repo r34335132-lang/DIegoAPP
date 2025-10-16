@@ -40,7 +40,7 @@ export default async function HomePage() {
               </h1>
             </div>
             <p className="text-xl text-muted-foreground text-pretty leading-relaxed">
-              La plataforma definitiva para coaches y alumnos. Gestiona entrenamientos, crea rutinas personalizadas y
+              La plataforma definitiva para Gestionar entrenamientos, crea rutinas personalizadas y
               mantén el seguimiento en tiempo real.
             </p>
           </div>
@@ -60,7 +60,7 @@ export default async function HomePage() {
               <CardHeader>
                 <Dumbbell className="h-10 w-10 text-secondary mb-2" />
                 <CardTitle>Rutinas Personalizadas</CardTitle>
-                <CardDescription>Crea y asigna rutinas con ejercicios en video para cada alumno</CardDescription>
+                <CardDescription>Se te asigna rutinas con ejercicios en video para cada alumno</CardDescription>
               </CardHeader>
             </Card>
 
