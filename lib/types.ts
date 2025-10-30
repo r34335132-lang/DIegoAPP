@@ -29,6 +29,7 @@ export interface Exercise {
   description: string | null
   video_url: string | null
   duration_seconds: number | null
+  folder_id: string | null
   created_at: string
   updated_at: string
 }
@@ -83,4 +84,14 @@ export interface Message {
   created_at: string
   sender?: Profile
   receiver?: Profile
+}
+
+export interface ExerciseFolder {
+  id: string
+  coach_id: string
+  name: string
+  description: string | null
+  color: string
+  created_at: string
+  updated_at: string
 }

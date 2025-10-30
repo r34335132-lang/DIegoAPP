@@ -24,5 +24,11 @@ export default async function ExercisesPage() {
     .eq("coach_id", user.id)
     .order("created_at", { ascending: false })
 
-  return <ExercisesManager exercises={exercises || []} coachId={user.id} />
+  const { data: folders } = await supabase
+    .from("exercise_folders")
+    .select("*")
+    .eq("coach_id", user.id)
+    .order("created_at", { ascending: false })
+
+  return <ExercisesManager exercises={exercises || []} folders={folders || []} coachId={user.id} />
 }
